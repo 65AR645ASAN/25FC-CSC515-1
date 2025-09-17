@@ -36,7 +36,7 @@ def main():
         return
 
     # Display the image in a resizable window
-    cv2.imshow("Neural Circuit Illustration", brain_matrix)
+    cv2.imshow("N C I", brain_matrix)
 
     # Create an output path on the Desktop for saving a duplicate
     desktop_output = os.path.join(os.path.expanduser("~"),
