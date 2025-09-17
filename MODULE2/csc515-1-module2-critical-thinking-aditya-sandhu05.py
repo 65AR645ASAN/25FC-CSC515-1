@@ -37,8 +37,11 @@ organize_valid_photos(current_base, 'puppy_files', 'processed_puppy_photos')
 
 # Find and select a photo to use
 processed_path = os.path.join(current_base, 'processed_puppy_photos')
-available_photos = [f for f in os.listdir(processed_path) if
-                    os.path.splitext(f)[1].lower() in {'.jpg', '.jpeg', '.png'}]
+available_photos = []  # start with an empty list
+for f in os.listdir(processed_path):  # loop through all items in the folder
+    file_extension = os.path.splitext(f)[1].lower()  # get the file extension in lowercase
+    if file_extension in {'.jpg', '.jpeg', '.png'}:  # check if it's a valid photo type
+        available_photos.append(f)  # add it to the list
 if not available_photos:
     raise ValueError("No suitable photo found in the source folder. Add a JPG, JPEG, or PNG file.")
 
