@@ -1,0 +1,3 @@
+opencv-python==4.8.0.76   # Core OpenCV functionality
+numpy==1.26.4             # Matrix operations, arrays
+matplotlib==3.9.0         # For displaying images & debugging
