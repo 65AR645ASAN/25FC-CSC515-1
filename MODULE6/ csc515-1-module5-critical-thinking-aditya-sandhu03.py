@@ -1,6 +1,5 @@
 # Importing required modules for handling images and visualizations
 import cv2 as vision_lib  # Handles image reading and transformations
-import numpy as array_lib  # Supports array-based operations
 import matplotlib.pyplot as plot_lib  # Enables creating and saving plots
 import os  # Assists with file path management
 import sys  # Allows for program exit on errors
@@ -13,7 +12,8 @@ def load_source_image(file_name):
     loaded_img = vision_lib.imread(full_path)
     # Check if loading failed and exit with a message if so
     if loaded_img is None:
-        print(f"Error: Could not load the image at '{full_path}'. Verify the file exists and path is correct.")
+        print(f"Error: Could not load the image at '{full_path}'. "
+              f"Verify the file exists and path is correct.")
         sys.exit(1)  # Terminate the script on failure
     return loaded_img
 
