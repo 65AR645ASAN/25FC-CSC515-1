@@ -1,6 +1,5 @@
 # Importing required modules for handling images and visualizations
 import cv2 as vision_lib  # Handles image reading and transformations
-import numpy as array_lib  # Supports array-based operations
 import matplotlib.pyplot as plot_lib  # Enables creating and saving plots
 import os  # Assists with file path management
 import sys  # Allows for program exit on errors
@@ -13,7 +12,8 @@ def load_source_image(file_name):
     loaded_img = vision_lib.imread(full_path)
     # Check if loading failed and exit with a message if so
     if loaded_img is None:
-        print(f"Error: Could not load the image at '{full_path}'. Verify the file exists and path is correct.")
+        print(f"Error: Could not load the image at '{full_path}'. "
+              f"Verify the file exists and path is correct.")
         sys.exit(1)  # Terminate the script on failure
     return loaded_img
 
@@ -71,24 +71,27 @@ def store_final_binary(result_img, output_file):
 
 # Main execution block
 if __name__ == "__main__":
-    # Define the source file name (update if actual name differs)
-    source_file = 'lllumination_scene.jpeg'
+    # Process first image (dark object - device)
+    source_file1 = 'device_image.jpeg'
+    original1 = load_source_image(source_file1)
+    mono1 = convert_to_monochrome(original1)
+    filtered1 = apply_noise_reduction(mono1)
+    binarized1 = apply_local_binarization(filtered1)
+    processing_stages1 = [original1, mono1, filtered1, binarized1]
+    stage_labels1 = ['Original Scene Capture (Device)', 'Monochrome Transformation', 'Filtered Image', 'Binarized Outcome']
+    generate_and_store_visual_summary(processing_stages1, stage_labels1, 'stages_summary_device.jpg')
+    store_final_binary(binarized1, 'final_binary_device.jpg')
 
-    # Load and process the image through stages
-    original = load_source_image(source_file)
-    mono = convert_to_monochrome(original)
-    filtered = apply_noise_reduction(mono)
-    binarized = apply_local_binarization(filtered)
-
-    # Collect stages for visualization
-    processing_stages = [original, mono, binarized]
-    stage_labels = ['Original Scene Capture', 'Monochrome Transformation', 'Binarized Outcome']
-
-    # Create and save the summary image
-    generate_and_store_visual_summary(processing_stages, stage_labels, 'stages_summary.jpg')
-
-    # Save the binary version alone
-    store_final_binary(binarized, 'final_binary_version.jpg')
+    # Process second image (light object - peach)
+    source_file2 = 'peach_image.jpeg'
+    original2 = load_source_image(source_file2)
+    mono2 = convert_to_monochrome(original2)
+    filtered2 = apply_noise_reduction(mono2)
+    binarized2 = apply_local_binarization(filtered2)
+    processing_stages2 = [original2, mono2, filtered2, binarized2]
+    stage_labels2 = ['Original Scene Capture (Peach)', 'Monochrome Transformation', 'Filtered Image', 'Binarized Outcome']
+    generate_and_store_visual_summary(processing_stages2, stage_labels2, 'stages_summary_peach.jpg')
+    store_final_binary(binarized2, 'final_binary_peach.jpg')
 
     # Custom note: This approach focuses on handling uneven lighting in scenes, ideal for variable conditions.
     # Ensure vision_lib (OpenCV) and plot_lib (Matplotlib) are available in your setup.
