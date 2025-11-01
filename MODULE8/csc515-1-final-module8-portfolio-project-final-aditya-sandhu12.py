@@ -10,7 +10,8 @@ import os
 
 #  Configuration Constants
 FACE_XML = 'haarcascade_frontalface_alt2.xml'
-EYE_XML = 'haarcascade_eye.xml'
+LEFT_EYE_XML = 'haarcascade_lefteye_2splits.xml'
+RIGHT_EYE_XML = 'haarcascade_righteye_2splits.xml'
 SRC_FOLDER = 'portfolio-images'
 DEST_FOLDER = 'detected-images'
 
@@ -50,7 +51,8 @@ def get_classifier(model_name, xml_path):
 
 # Load required models
 face_detector = get_classifier("frontal face", FACE_XML)
-eye_detector = get_classifier("eye", EYE_XML)
+left_eye_detector = get_classifier("left eye", LEFT_EYE_XML)
+right_eye_detector = get_classifier("right eye", RIGHT_EYE_XML)
 
 print("\nAll detection models loaded successfully.\n")
 os.makedirs(DEST_FOLDER, exist_ok=True)
@@ -106,26 +108,48 @@ def search_components(optmzd_gray, base_picture):
         sub_rgb = base_picture[loc_y:loc_y + size_h, loc_x:loc_x + size_w]
         sub_mono = optmzd_gray[loc_y:loc_y + size_h, loc_x:loc_x + size_w]
 
-        # Restrict eye search to top 60% of face to prevent false positives on mouth/nose
-        eye_search_h = int(size_h * 0.6)
-        sub_eye_mono = sub_mono[0:eye_search_h, 0:size_w]
+        # Additional enhancement on face ROI for better eye detection
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        sub_mono = clahe.apply(sub_mono)
 
-        component_locs = eye_detector.detectMultiScale(
-            sub_eye_mono,
-            scaleFactor=1.1,
-            minNeighbors=15,  # Increased for stricter detection
+        # Restrict to upper 60% of face
+        eye_h = int(size_h * 0.6)
+
+        # Left eye search in left half of upper face
+        sub_left = sub_mono[0:eye_h, 0:size_w//2]
+        left_eyes = left_eye_detector.detectMultiScale(
+            sub_left,
+            scaleFactor=1.05,
+            minNeighbors=5,
             minSize=(15, 15)
         )
 
-        # Check if sufficient components are found
-        if len(component_locs) > 0:
+        # Right eye search in right half of upper face
+        sub_right = sub_mono[0:eye_h, size_w//2:]
+        right_eyes = right_eye_detector.detectMultiScale(
+            sub_right,
+            scaleFactor=1.05,
+            minNeighbors=5,
+            minSize=(15, 15)
+        )
+
+        # Collect valid eyes
+        valid_eyes = []
+
+        for (ex, ey, ew, eh) in left_eyes:
+            valid_eyes.append((ex, ey, ew, eh))
+
+        for (ex, ey, ew, eh) in right_eyes:
+            valid_eyes.append((size_w//2 + ex, ey, ew, eh))
+
+        # Check if at least one eye is found
+        if len(valid_eyes) > 0:
             authenticated += 1
             # Mark the authenticated area
             cv2.rectangle(base_picture, (loc_x, loc_y), (loc_x + size_w, loc_y + size_h), (0, 0, 255), 2)
 
             # Process each component
-            for (cx, cy, cw, ch) in component_locs:
-                # Adjust y-coordinate since we used restricted ROI, but blurring is on full sub_rgb
+            for (cx, cy, cw, ch) in valid_eyes:
                 component_area = sub_rgb[cy:cy + ch, cx:cx + cw]
                 transformed = cv2.GaussianBlur(component_area, (23, 23), 30)
                 sub_rgb[cy:cy + ch, cx:cx + cw] = transformed

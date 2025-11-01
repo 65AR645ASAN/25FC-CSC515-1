@@ -106,26 +106,28 @@ def search_components(optmzd_gray, base_picture):
         sub_rgb = base_picture[loc_y:loc_y + size_h, loc_x:loc_x + size_w]
         sub_mono = optmzd_gray[loc_y:loc_y + size_h, loc_x:loc_x + size_w]
 
-        # Restrict eye search to top 60% of face to prevent false positives on mouth/nose
-        eye_search_h = int(size_h * 0.6)
-        sub_eye_mono = sub_mono[0:eye_search_h, 0:size_w]
+        # Additional enhancement on face ROI for better eye detection
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        sub_mono = clahe.apply(sub_mono)
 
         component_locs = eye_detector.detectMultiScale(
-            sub_eye_mono,
-            scaleFactor=1.1,
-            minNeighbors=15,  # Increased for stricter detection
-            minSize=(15, 15)
+            sub_mono,
+            scaleFactor=1.05,
+            minNeighbors=10,
+            minSize=(20, 20)
         )
 
+        # Filter to valid eyes in upper part of face
+        valid_eyes = [(cx, cy, cw, ch) for (cx, cy, cw, ch) in component_locs if cy + ch <= int(size_h * 0.6)]
+
         # Check if sufficient components are found
-        if len(component_locs) > 0:
+        if len(valid_eyes) > 0:
             authenticated += 1
             # Mark the authenticated area
             cv2.rectangle(base_picture, (loc_x, loc_y), (loc_x + size_w, loc_y + size_h), (0, 0, 255), 2)
 
             # Process each component
-            for (cx, cy, cw, ch) in component_locs:
-                # Adjust y-coordinate since we used restricted ROI, but blurring is on full sub_rgb
+            for (cx, cy, cw, ch) in valid_eyes:
                 component_area = sub_rgb[cy:cy + ch, cx:cx + cw]
                 transformed = cv2.GaussianBlur(component_area, (23, 23), 30)
                 sub_rgb[cy:cy + ch, cx:cx + cw] = transformed

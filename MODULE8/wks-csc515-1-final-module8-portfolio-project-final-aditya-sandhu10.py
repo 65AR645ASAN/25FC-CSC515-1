@@ -106,14 +106,10 @@ def search_components(optmzd_gray, base_picture):
         sub_rgb = base_picture[loc_y:loc_y + size_h, loc_x:loc_x + size_w]
         sub_mono = optmzd_gray[loc_y:loc_y + size_h, loc_x:loc_x + size_w]
 
-        # Restrict eye search to top 60% of face to prevent false positives on mouth/nose
-        eye_search_h = int(size_h * 0.6)
-        sub_eye_mono = sub_mono[0:eye_search_h, 0:size_w]
-
         component_locs = eye_detector.detectMultiScale(
-            sub_eye_mono,
+            sub_mono,
             scaleFactor=1.1,
-            minNeighbors=15,  # Increased for stricter detection
+            minNeighbors=11,
             minSize=(15, 15)
         )
 
@@ -125,7 +121,6 @@ def search_components(optmzd_gray, base_picture):
 
             # Process each component
             for (cx, cy, cw, ch) in component_locs:
-                # Adjust y-coordinate since we used restricted ROI, but blurring is on full sub_rgb
                 component_area = sub_rgb[cy:cy + ch, cx:cx + cw]
                 transformed = cv2.GaussianBlur(component_area, (23, 23), 30)
                 sub_rgb[cy:cy + ch, cx:cx + cw] = transformed
@@ -169,7 +164,7 @@ def spvz_op(image_label):
 
     print("  Supervised {} authenticated components.".format(total_auth))
 
-    access_end = os.path.join(DEST_FOLDER, "result_" + image_label)  # Changed to match report
+    access_end = os.path.join(DEST_FOLDER, "outcome_" + image_label)
     cv2.imwrite(access_end, operation_result)
     print("  Secured outcome in: {}".format(access_end))
 
